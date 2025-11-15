@@ -1,6 +1,6 @@
 use crate::error::{Error, Result};
 use crate::model::ModelInfo;
-use candle_core::{Device, Tensor};
+use candle_core::{pickle, Device, Tensor};
 use serde_json::Value;
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -15,6 +15,8 @@ pub struct Embedder {
 impl Embedder {
     pub fn load(model_info: &ModelInfo, device: Device) -> Result<Self> {
         tracing::info!("Loading model from: {:?}", model_info.model_path);
+
+        Self::ensure_safetensors_converted(&model_info.model_path)?;
 
         let config_path = model_info.model_path.join("config.json");
         let config_content = std::fs::read_to_string(&config_path)
@@ -95,7 +97,6 @@ impl Embedder {
             .map_err(|e| Error::ModelLoadFailed(format!("Failed to load safetensors: {}", e)))?
         };
 
-        // Get list of tensors and find embedding weight
         let tensor_list = safetensors.tensors();
         let embedding_weight_name = tensor_list
             .iter()
@@ -129,5 +130,41 @@ impl Embedder {
 
     pub fn embedding_dim(&self) -> usize {
         self.embedding_dim
+    }
+
+    fn ensure_safetensors_converted(model_dir: &PathBuf) -> Result<()> {
+        let pytorch_file = model_dir.join("pytorch_model.bin");
+        let safetensors_file = model_dir.join("model.safetensors");
+
+        if safetensors_file.exists() {
+            return Ok(());
+        }
+
+        if !pytorch_file.exists() {
+            return Ok(());
+        }
+
+        tracing::info!("Converting pytorch_model.bin to model.safetensors...");
+
+        let tensors_vec = pickle::read_all(&pytorch_file)
+            .map_err(|e| Error::ModelLoadFailed(format!("Failed to read PyTorch file: {}", e)))?;
+
+        tracing::info!("Loading {} tensors from PyTorch model", tensors_vec.len());
+
+        let tensors: std::collections::HashMap<_, _> = tensors_vec.into_iter().collect();
+
+        candle_core::safetensors::save(&tensors, &safetensors_file)
+            .map_err(|e| Error::ModelLoadFailed(format!("Failed to save SafeTensors: {}", e)))?;
+
+        tracing::info!("✓ Converted to SafeTensors format");
+
+        // Remove the old PyTorch file to save space
+        if let Err(e) = std::fs::remove_file(&pytorch_file) {
+            tracing::warn!("Could not remove pytorch_model.bin: {}", e);
+        } else {
+            tracing::info!("Removed pytorch_model.bin to save space");
+        }
+
+        Ok(())
     }
 }
