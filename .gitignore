@@ -1,0 +1,24 @@
+# Rust
+/target
+Cargo.lock
+**/*.rs.bk
+*.pdb
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Embeddy data
+.embeddy/
+models/
+
+# Logs
+*.log
+
+# OS
+Thumbs.db
+

@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  embeddy:
+    build: .
+    image: embeddy:latest
+    container_name: embeddy
+    ports:
+      - "8080:8080"
+    volumes:
+      - embeddy-data:/data
+    environment:
+      - RUST_LOG=info
+      - EMBEDDY_DATA_DIR=/data
+    restart: unless-stopped
+
+volumes:
+  embeddy-data:
+    driver: local
