@@ -1,11 +1,11 @@
-# Embeddy
+# embeddy
 
 [![Rust](https://img.shields.io/badge/rust-1.91%2B-orange.svg)](https://www.rust-lang.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Build Status](https://img.shields.io/github/actions/workflow/status/cedrugs/embeddy/ci.yml?branch=main)](https://github.com/cedrugs/embeddy/actions)
 
-A lightweight, embeddings-only model runtime with CLI and HTTP API. Built in Rust for performance and efficiency, Embeddy allows you to download, manage, and run text embedding models from HuggingFace without heavy dependencies.
+A lightweight, embeddings-only model runtime with CLI and HTTP API. Built in Rust for performance and efficiency, embeddy allows you to download, manage, and run text embedding models from HuggingFace without heavy dependencies.
 
 ## Features
 
