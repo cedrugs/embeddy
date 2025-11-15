@@ -1,5 +1,7 @@
 use crate::embedder::Embedder;
 use crate::error::{Error, Result};
+use crate::config::Config;
+use crate::model::ModelRegistry;
 use axum::{
 	extract::State,
 	http::StatusCode,
@@ -9,38 +11,57 @@ use axum::{
 };
 use candle_core::Device;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 
 #[derive(Clone)]
 pub struct AppState {
-	embedder: Arc<RwLock<Embedder>>,
-	model_name: String,
-	device_name: String,
+	embedders: Arc<RwLock<HashMap<String, Embedder>>>,
+	config: Config,
+	device: Device,
 }
 
 impl AppState {
-	pub fn new(embedder: Embedder, model_name: String, device_name: String) -> Self {
+	pub fn new(config: Config, device: Device) -> Self {
 		Self {
-			embedder: Arc::new(RwLock::new(embedder)),
-			model_name,
-			device_name,
+			embedders: Arc::new(RwLock::new(HashMap::new())),
+			config,
+			device,
 		}
+	}
+	
+	pub async fn get_or_load_embedder(&self, model_name: &str) -> Result<()> {
+		let embedders = self.embedders.read().await;
+		if embedders.contains_key(model_name) {
+			return Ok(());
+		}
+		drop(embedders);
+		
+		// Load the model
+		let registry = ModelRegistry::load(&self.config)?;
+		let model_info = registry.get_model(model_name)?;
+		
+		tracing::info!("Loading model '{}' on device '{:?}'", model_name, self.device);
+		let embedder = Embedder::load(model_info, self.device.clone())?;
+		
+		let mut embedders = self.embedders.write().await;
+		embedders.insert(model_name.to_string(), embedder);
+		
+		Ok(())
 	}
 }
 
 #[derive(Serialize)]
 pub struct HealthResponse {
 	pub status: String,
-	pub model: String,
+	pub loaded_models: Vec<String>,
 	pub device: String,
-	pub embedding_dim: usize,
 }
 
 #[derive(Deserialize)]
 pub struct EmbedRequest {
-	#[serde(default)]
-	pub model: Option<String>,
+	pub model: String,
 	pub input: Vec<String>,
 }
 
@@ -71,13 +92,13 @@ impl IntoResponse for Error {
 }
 
 async fn health_handler(State(state): State<AppState>) -> Result<Json<HealthResponse>> {
-	let embedder = state.embedder.read().await;
+	let embedders = state.embedders.read().await;
+	let loaded_models: Vec<String> = embedders.keys().cloned().collect();
 	
 	Ok(Json(HealthResponse {
 		status: "ok".to_string(),
-		model: state.model_name.clone(),
-		device: state.device_name.clone(),
-		embedding_dim: embedder.embedding_dim(),
+		loaded_models,
+		device: format!("{:?}", state.device),
 	}))
 }
 
@@ -89,12 +110,18 @@ async fn embed_handler(
 		return Err(Error::InvalidInput("Input cannot be empty".to_string()));
 	}
 
-	let embedder = state.embedder.read().await;
+	// Load model if not already loaded
+	state.get_or_load_embedder(&payload.model).await?;
+	
+	let embedders = state.embedders.read().await;
+	let embedder = embedders.get(&payload.model)
+		.ok_or_else(|| Error::ModelNotFound(payload.model.clone()))?;
+	
 	let embeddings = embedder.embed(&payload.input)?;
 	let dimension = embedder.embedding_dim();
 
 	Ok(Json(EmbedResponse {
-		model: state.model_name.clone(),
+		model: payload.model,
 		dimension,
 		embeddings,
 	}))

@@ -20,12 +20,8 @@ pub enum Commands {
 		alias: Option<String>,
 	},
 
-	/// Start the HTTP API server
+	/// Start the HTTP API server (models loaded on-demand)
 	Serve {
-		/// Model name or alias to use
-		#[arg(long)]
-		model: String,
-
 		/// Device to run on (e.g., "cpu" or "cuda:0")
 		#[arg(long, default_value = "cpu")]
 		device: String,

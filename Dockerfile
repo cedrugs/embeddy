@@ -7,6 +7,7 @@ WORKDIR /build
 RUN apt-get update && apt-get install -y \
 	pkg-config \
 	libssl-dev \
+	g++ \
 	&& rm -rf /var/lib/apt/lists/*
 
 # Copy manifests
@@ -46,4 +47,4 @@ ENV RUST_LOG=info
 EXPOSE 8080
 
 ENTRYPOINT ["embeddy"]
-CMD ["serve", "--model", "default", "--host", "0.0.0.0", "--port", "8080"]
+CMD ["serve", "--host", "0.0.0.0", "--port", "8080"]

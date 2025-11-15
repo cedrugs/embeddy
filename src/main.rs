@@ -55,24 +55,18 @@ async fn main() -> Result<()> {
 			}
 		}
 
-		Commands::Serve { model, device, port, host } => {
-			let registry = model::ModelRegistry::load(&config)?;
-			let model_info = registry.get_model(&model)?;
-			
+		Commands::Serve { device, port, host } => {
 			let device = parse_device(&device)?;
 			let device_name = format!("{:?}", device);
 			
-			tracing::info!("Loading model '{}' on device '{}'", model, device_name);
-			let embedder = embedder::Embedder::load(model_info, device)?;
-			
-			let state = server::AppState::new(embedder, model.clone(), device_name.clone());
+			let state = server::AppState::new(config, device);
 			
 			println!("🚀 Embeddy server starting...");
-			println!("   Model: {}", model);
 			println!("   Device: {}", device_name);
 			println!("   Listening on: http://{}:{}", host, port);
 			println!("   Health: http://{}:{}/api/health", host, port);
 			println!("   Embed: http://{}:{}/api/embed", host, port);
+			println!("\n   Models will be loaded on-demand when requested via API");
 			
 			server::serve(&host, port, state).await?;
 		}
