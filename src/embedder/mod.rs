@@ -2,6 +2,7 @@ use crate::error::{Error, Result};
 use crate::model::ModelInfo;
 use candle_core::{pickle, Device, Tensor};
 use serde_json::Value;
+use std::path::Path;
 use std::path::PathBuf;
 use std::sync::Arc;
 
@@ -132,7 +133,7 @@ impl Embedder {
         self.embedding_dim
     }
 
-    fn ensure_safetensors_converted(model_dir: &PathBuf) -> Result<()> {
+    fn ensure_safetensors_converted(model_dir: &Path) -> Result<()> {
         let pytorch_file = model_dir.join("pytorch_model.bin");
         let safetensors_file = model_dir.join("model.safetensors");
 
