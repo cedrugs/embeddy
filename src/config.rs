@@ -12,7 +12,7 @@ pub struct Config {
 impl Config {
     pub fn new() -> crate::error::Result<Self> {
         let project_dirs = ProjectDirs::from("", "", "embeddy").ok_or_else(|| {
-            crate::error::Error::ConfigError("Could not determine config directory".to_string())
+            crate::error::Error::Config("Could not determine config directory".to_string())
         })?;
 
         let data_dir = project_dirs.data_dir().to_path_buf();

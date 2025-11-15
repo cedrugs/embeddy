@@ -25,7 +25,7 @@ fn parse_device(device_str: &str) -> Result<Device> {
                 0
             };
             Device::new_cuda(ordinal).map_err(|e| {
-                error::Error::ConfigError(format!("Failed to initialize CUDA device: {}", e))
+                error::Error::Config(format!("Failed to initialize CUDA device: {}", e))
             })
         }
         _ => Err(error::Error::InvalidInput(format!(

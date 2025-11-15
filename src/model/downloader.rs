@@ -2,7 +2,6 @@ use crate::config::Config;
 use crate::error::{Error, Result};
 use crate::model::{ModelInfo, ModelRegistry};
 use hf_hub::api::sync::Api;
-use std::path::PathBuf;
 
 pub struct ModelDownloader {
     config: Config,
@@ -44,7 +43,7 @@ impl ModelDownloader {
         let name = alias.clone().unwrap_or_else(|| {
             hf_repo_id
                 .split('/')
-                .last()
+                .next_back()
                 .unwrap_or(hf_repo_id)
                 .to_string()
         });
@@ -64,9 +63,5 @@ impl ModelDownloader {
         tracing::info!("Model '{}' successfully pulled and registered", name);
 
         Ok(model_info)
-    }
-
-    pub fn list(&self) -> Vec<&ModelInfo> {
-        self.registry.list_models()
     }
 }

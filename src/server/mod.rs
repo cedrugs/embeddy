@@ -81,7 +81,7 @@ impl IntoResponse for Error {
         let (status, message) = match self {
             Error::ModelNotFound(_) => (StatusCode::NOT_FOUND, self.to_string()),
             Error::InvalidInput(_) => (StatusCode::BAD_REQUEST, self.to_string()),
-            Error::ModelLoadFailed(_) | Error::EmbeddingError(_) => {
+            Error::ModelLoadFailed(_) | Error::Embedding(_) => {
                 (StatusCode::INTERNAL_SERVER_ERROR, self.to_string())
             }
             _ => (
@@ -150,11 +150,11 @@ pub async fn serve(host: &str, port: u16, state: AppState) -> Result<()> {
 
     let listener = tokio::net::TcpListener::bind(&addr)
         .await
-        .map_err(|e| Error::ConfigError(format!("Failed to bind to {}: {}", addr, e)))?;
+        .map_err(|e| Error::Config(format!("Failed to bind to {}: {}", addr, e)))?;
 
     axum::serve(listener, app)
         .await
-        .map_err(|e| Error::ConfigError(format!("Server error: {}", e)))?;
+        .map_err(|e| Error::Config(format!("Server error: {}", e)))?;
 
     Ok(())
 }
