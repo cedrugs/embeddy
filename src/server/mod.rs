@@ -429,7 +429,8 @@ async fn openapi_handler() -> Json<serde_json::Value> {
 }
 
 async fn docs_handler() -> Html<&'static str> {
-    Html(r##"<!DOCTYPE html>
+    Html(
+        r##"<!DOCTYPE html>
 <html>
 <head>
     <title>Embeddy API</title>
@@ -442,7 +443,8 @@ async fn docs_handler() -> Html<&'static str> {
         SwaggerUIBundle({ url: "/openapi.json", dom_id: "#swagger-ui" });
     </script>
 </body>
-</html>"##)
+</html>"##,
+    )
 }
 
 pub fn create_router(state: AppState) -> Router {

@@ -60,7 +60,13 @@ async fn main() -> Result<()> {
             }
         }
 
-        Commands::Serve { device, port, host, model, cache_size } => {
+        Commands::Serve {
+            device,
+            port,
+            host,
+            model,
+            cache_size,
+        } => {
             let device = parse_device(&device)?;
             let device_name = format!("{:?}", device);
 
