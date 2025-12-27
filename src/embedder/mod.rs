@@ -78,7 +78,9 @@ impl Embedder {
 
             let pooled = embeddings
                 .mean(0)
-                .map_err(|e| Error::Embedding(format!("Pooling failed: {}", e)))?;
+                .map_err(|e| Error::Embedding(format!("Pooling failed: {}", e)))?
+                .to_dtype(candle_core::DType::F32)
+                .map_err(|e| Error::Embedding(format!("Failed to cast to F32: {}", e)))?;
 
             let embedding_vec = pooled
                 .to_vec1::<f32>()

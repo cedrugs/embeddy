@@ -60,18 +60,36 @@ async fn main() -> Result<()> {
             }
         }
 
-        Commands::Serve { device, port, host } => {
+        Commands::Serve { device, port, host, model, cache_size } => {
             let device = parse_device(&device)?;
             let device_name = format!("{:?}", device);
 
-            let state = server::AppState::new(config, device);
+            let state = server::AppState::new(config.clone(), device, cache_size);
+
+            // Preload model if specified
+            if let Some(ref model_name) = model {
+                // Check if model exists, if not try to download it
+                let registry = model::ModelRegistry::load(&config)?;
+                if registry.get_model(model_name).is_err() {
+                    println!("📥 Model '{}' not found, downloading...", model_name);
+                    let mut downloader = ModelDownloader::new(config.clone())?;
+                    downloader.pull(model_name, None)?;
+                    println!("✓ Download complete");
+                }
+
+                println!("📦 Preloading model: {}", model_name);
+                state.get_or_load_embedder(model_name).await?;
+                println!("✓ Model loaded");
+            }
 
             println!("🚀 Embeddy server starting...");
             println!("   Device: {}", device_name);
+            println!("   Cache size: {}", cache_size);
             println!("   Listening on: http://{}:{}", host, port);
-            println!("   Health: http://{}:{}/api/health", host, port);
-            println!("   Embed: http://{}:{}/api/embed", host, port);
-            println!("\n   Models will be loaded on-demand when requested via API");
+            println!("   Docs: http://{}:{}/docs", host, port);
+            if model.is_none() {
+                println!("\n   Models will be loaded on-demand when requested via API");
+            }
 
             server::serve(&host, port, state).await?;
         }
@@ -127,6 +145,19 @@ async fn main() -> Result<()> {
                     println!();
                 }
             }
+        }
+
+        Commands::Remove { model } => {
+            let mut registry = model::ModelRegistry::load(&config)?;
+            let model_info = registry.remove_model(&model)?;
+
+            // Remove model files
+            if model_info.model_path.exists() {
+                std::fs::remove_dir_all(&model_info.model_path).ok();
+            }
+
+            registry.save(&config)?;
+            println!("✓ Removed model: {}", model);
         }
     }
 

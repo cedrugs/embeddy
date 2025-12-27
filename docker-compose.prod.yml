@@ -1,8 +1,7 @@
-# Development - builds from source
+# Production - pulls from ghcr.io
 services:
   embeddy:
-    build: .
-    image: embeddy:latest
+    image: ghcr.io/cedrugs/embeddy:latest
     container_name: embeddy
     ports:
       - "8080:8080"
@@ -11,8 +10,8 @@ services:
     environment:
       - RUST_LOG=info
       - EMBEDDY_DATA_DIR=/data
-      # - EMBEDDY_MODEL=sentence-transformers/all-MiniLM-L6-v2
-      # - EMBEDDY_CACHE_SIZE=10000
+      - EMBEDDY_MODEL=sentence-transformers/all-MiniLM-L6-v2
+      - EMBEDDY_CACHE_SIZE=10000
     restart: unless-stopped
 
 volumes:

@@ -51,4 +51,10 @@ impl ModelRegistry {
     pub fn list_models(&self) -> Vec<&ModelInfo> {
         self.models.values().collect()
     }
+
+    pub fn remove_model(&mut self, name: &str) -> Result<ModelInfo> {
+        self.models
+            .remove(name)
+            .ok_or_else(|| Error::ModelNotFound(name.to_string()))
+    }
 }
