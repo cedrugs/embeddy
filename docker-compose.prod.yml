@@ -10,7 +10,7 @@ services:
     environment:
       - RUST_LOG=info
       - EMBEDDY_DATA_DIR=/data
-      - EMBEDDY_MODEL=sentence-transformers/all-MiniLM-L6-v2
+      - EMBEDDY_MODEL=nomic-ai/nomic-embed-text-v2-moe
       - EMBEDDY_CACHE_SIZE=10000
     restart: unless-stopped
 
